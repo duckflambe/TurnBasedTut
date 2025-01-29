@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,9 +6,15 @@ public class LevelGrid : MonoBehaviour
 {
 	public static LevelGrid Instance { get; private set; }
 
+	public event EventHandler OnGridObjectChanged;
+
+	[SerializeField] private int width = 20;
+	[SerializeField] private int height = 20;
+	[SerializeField] private float cellSize = 2f;
+
 	[SerializeField] private Transform debugPrefab;
 
-	private GridSystem gridSystem;
+	private GridSystem<GridObject> gridSystem;
 
 	private void Awake()
 	{
@@ -20,13 +26,19 @@ public class LevelGrid : MonoBehaviour
 		}
 		Instance = this;
 
-		gridSystem = new GridSystem(10, 10, 2f);
-		gridSystem.CreateDebugObjects(debugPrefab);
+		gridSystem = new GridSystem<GridObject>(width, height, cellSize,
+			(GridSystem<GridObject> g, GridPosition p) => new GridObject(g,p));
+		//gridSystem.CreateDebugObjects(debugPrefab);
 	}
 
 	private void Update()
 	{
 	}
+
+	public int Width => width;
+	public int Height => height;
+	public float CellSize => cellSize;
+
 
 	public void AddUnitToGridPosition(Unit unit, GridPosition position)
 	{
@@ -50,6 +62,8 @@ public class LevelGrid : MonoBehaviour
 	{
 		RemoveUnitFromGridPosition(unit, from);
 		AddUnitToGridPosition(unit, to);
+
+		OnGridObjectChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	public GridPosition GetGridPosition(Vector3 worldPosition) => gridSystem.GetGridPosition(worldPosition);
@@ -65,5 +79,17 @@ public class LevelGrid : MonoBehaviour
 	{
 		var gridObject = gridSystem.GetGridObject(gridPosition);
 		return gridObject.GetUnitList().Count > 0;
+	}
+
+	public IInteractable GetInteractableAtGridPosition(GridPosition gridPosition)
+	{
+		var gridObject = gridSystem.GetGridObject(gridPosition);
+		return gridObject.Interactable;
+	}
+
+	public void SetInteractableAtGridPosition(IInteractable interactable, GridPosition gridPosition)
+	{
+		var gridObject = gridSystem.GetGridObject(gridPosition);
+		gridObject.Interactable = interactable;
 	}
 }

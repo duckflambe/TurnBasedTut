@@ -56,5 +56,7 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "TurnBasedTut.sln"
+    "dotnet.defaultSolution": "TurnBasedTut.sln",
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": false
 }

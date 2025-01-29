@@ -9,6 +9,10 @@ public class UnitActionSystem : MonoBehaviour
 	public static UnitActionSystem Instance { get; private set; }
 
 	public event EventHandler OnUnitSelected;
+	public event EventHandler OnActionSelected;
+	public event EventHandler<bool> OnBusyChanged;
+
+	public event EventHandler OnActionPointsChanged;
 	private bool isBusy = false;
 
 	[SerializeField]
@@ -43,7 +47,13 @@ public class UnitActionSystem : MonoBehaviour
 			return;
 		}
 
-		if(EventSystem.current.IsPointerOverGameObject())
+		if (!TurnSystem.Instance.IsPlayerTurn())
+		{
+			return;
+		}
+
+		if ((EventSystem.current != null)
+			&& EventSystem.current.IsPointerOverGameObject())
 		{
 			return;
 		}
@@ -58,22 +68,26 @@ public class UnitActionSystem : MonoBehaviour
 
 	private void HandleSelectedAction()
 	{
-		if (Input.GetMouseButtonDown(0)
+		if (InputManager.Instance.IsMouseLeftClicked()
 			&& selectedAction != null
 			&& !isBusy)
 		{
 			var mouseGridPosition = LevelGrid.Instance.GetGridPosition(MouseWorld.GetPosition());
-			if(selectedAction.IsValidActionGridPosition(mouseGridPosition))
+			if (selectedAction.IsValidActionGridPosition(mouseGridPosition))
 			{
-				selectedAction.Act(mouseGridPosition, ClearBusy);
-				SetBusy();
+				if (SelectedUnit.TrySpendActionPoints(selectedAction))
+				{
+					selectedAction.Act(mouseGridPosition, ClearBusy);
+					OnActionPointsChanged?.Invoke(this, EventArgs.Empty);
+					SetBusy();
+				}
 			}
 		}
 	}
 
 	private bool TrySelectUnit()
 	{
-		if (Input.GetMouseButtonDown(0))
+		if (InputManager.Instance.IsMouseLeftClicked())
 		{
 			var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 			if (Physics.Raycast(ray, out var hit, float.MaxValue, unitLayerMask))
@@ -81,7 +95,8 @@ public class UnitActionSystem : MonoBehaviour
 				Unit unit;
 				if (hit.collider.TryGetComponent<Unit>(out unit))
 				{
-					if (unit != SelectedUnit)
+					if ((unit != SelectedUnit)
+						&& !unit.IsEnemy())
 					{
 						SetSelectedUnit(unit);
 						return true;
@@ -96,23 +111,32 @@ public class UnitActionSystem : MonoBehaviour
 	private void SetSelectedUnit(Unit unit)
 	{
 		SelectedUnit = unit;
-		SetSelectedAction(SelectedUnit.GetMoveAction());
+		SetSelectedAction(SelectedUnit.GetAction<MoveAction>());
 		OnUnitSelected?.Invoke(this, EventArgs.Empty);
+		OnActionPointsChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	public void SetSelectedAction(BaseAction action)
 	{
 		selectedAction = action;
+		OnActionSelected?.Invoke(this, EventArgs.Empty);
 	}
+
+	public bool IsSelectedActionCircularRange 
+		=> (selectedAction != null) 
+		&& ((selectedAction is ShootAction)
+			|| (selectedAction is GrenadeAction));
 
 	private void SetBusy()
 	{
 		isBusy = true;
+		OnBusyChanged?.Invoke(this, isBusy);
 	}
 
 	private void ClearBusy()
 	{
 		isBusy = false;
+		OnBusyChanged?.Invoke(this, isBusy);
 	}
 
 	public BaseAction GetSelectedAction()

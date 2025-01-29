@@ -16,7 +16,7 @@ public class MouseWorld : MonoBehaviour
     
     void Update()
     {
-        var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        var ray = Camera.main.ScreenPointToRay(InputManager.Instance.GetMouseScreenPosition());
         if (Physics.Raycast(ray, out var hit, float.MaxValue, layerMask))
         {
             transform.position = hit.point;

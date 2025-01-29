@@ -26,8 +26,7 @@ public class SpinAction : BaseAction
 		if (spinRemaining < distance)
 		{
 			transform.Rotate(Vector3.up, spinRemaining);
-			isActive = false;
-			onComplete();
+			ActionComplete();
 		}
 		else
 		{
@@ -38,9 +37,8 @@ public class SpinAction : BaseAction
 
 	public override void Act(GridPosition gridPosition, Action onActionComplete)
 	{
-		this.onComplete = onActionComplete;
-		isActive = true;
 		spinRemaining = 360.0f;
+		ActionStart(onActionComplete);
 	}
 
 	public override List<GridPosition> GetValidActionGridPositions()
@@ -48,6 +46,20 @@ public class SpinAction : BaseAction
 		return new List<GridPosition>
 		{
 			unit.GetGridPosition()
+		};
+	}
+
+	public override int GetActionPointCost()
+	{
+		return 2;
+	}
+
+	public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+	{
+		return new EnemyAIAction
+		{
+			actionScore = 0,
+			gridPosition = gridPosition
 		};
 	}
 }

@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class GridObject
 {
-	private GridSystem gridSystem;
+	private GridSystem<GridObject> gridSystem;
 	private GridPosition position;
 
 	private List<Unit> unitList;
+	private IInteractable interactable;
 
-	public GridObject(GridSystem gridSystem, GridPosition position)
+	public IInteractable Interactable { get => interactable; set => interactable = value; }
+
+	public GridObject(GridSystem<GridObject> gridSystem, GridPosition position)
 	{
 		this.gridSystem = gridSystem;
 		this.position = position;
@@ -51,5 +54,4 @@ public class GridObject
 	{
 		return unitList.Contains(unit);
 	}
-
 }

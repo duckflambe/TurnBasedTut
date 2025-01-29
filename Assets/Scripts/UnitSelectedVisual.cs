@@ -22,7 +22,12 @@ public class UnitSelectedVisual : MonoBehaviour
         ShowIfSelected();
     }
 
-    private void UnitActionSystem_OnUnitSelected(object sender, EventArgs e)
+	private void OnDestroy()
+	{
+		UnitActionSystem.Instance.OnUnitSelected -= UnitActionSystem_OnUnitSelected;
+	}
+
+	private void UnitActionSystem_OnUnitSelected(object sender, EventArgs e)
     {
         ShowIfSelected();
     }
